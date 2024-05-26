@@ -6,6 +6,7 @@ from async_db import get_db
 from users import get_current_user
 from facade.favourite_song_facade import favourite_song_facade
 from facade.song_facade import song_facade
+from facade.playlist_facade import playlist_facade
 
 
 router = APIRouter(
@@ -42,3 +43,13 @@ async def get_songs_by_genre(
 ):
     songs = await song_facade.get_song_by_genre(genre_id)
     return songs
+
+
+@router.post('/playlist', response_model=schemas.Playlist)
+async def create_playlist(
+        name: str,
+        current_user: models.User = Depends(get_current_user)
+):
+    db_playlist = await playlist_facade.create_playlist(name, user_id=current_user.id)
+
+    return db_playlist
