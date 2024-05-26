@@ -1,12 +1,13 @@
 import models
 import schemas
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException, status, Depends, APIRouter
+from fastapi import HTTPException, status, Depends, APIRouter, Response
 from async_db import get_db
 from users import get_current_user
 from facade.favourite_song_facade import favourite_song_facade
 from facade.song_facade import song_facade
 from facade.playlist_facade import playlist_facade
+from facade.song_manager_facade import SongManager
 
 
 router = APIRouter(
@@ -66,3 +67,31 @@ async def add_playlist_song(
     )
 
     return playlist_song
+
+
+@router.get('/playlist/{playlist_id}/songs/', response_model=list[schemas.PlaylistSong])
+async def get_playlist_songs(
+    playlist_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    playlist_songs = await playlist_facade.get_songs_in_playlist(playlist_id)
+    return playlist_songs
+
+
+@router.get('/songs/{song_id}')
+async def get_song(
+    song_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    song_manager = SongManager(db)
+    song = await song_manager.get_song(song_id)
+    return song
+
+@router.get('/songs/{song_id}/download')
+async def download_song(
+    song_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    song_manager = SongManager(db)
+    return await song_manager.download_file(song_id)
