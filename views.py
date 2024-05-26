@@ -45,7 +45,7 @@ async def get_songs_by_genre(
     return songs
 
 
-@router.post('/playlist', response_model=schemas.Playlist)
+@router.post('/playlist/', response_model=schemas.Playlist)
 async def create_playlist(
         name: str,
         current_user: models.User = Depends(get_current_user)
@@ -53,3 +53,16 @@ async def create_playlist(
     db_playlist = await playlist_facade.create_playlist(name, user_id=current_user.id)
 
     return db_playlist
+
+
+@router.post('/playlist/add-songs/', response_model=schemas.PlaylistSong)
+async def add_playlist_song(
+        payload: schemas.PlaylistSongCreate,
+        current_user: models.User = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db)
+):
+    playlist_song = await playlist_facade.add_song_to_playlist(
+        song_id=payload.song_id, playlist_id=payload.playlist_id
+    )
+
+    return playlist_song
