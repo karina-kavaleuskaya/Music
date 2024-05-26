@@ -38,5 +38,14 @@ class PlayList(BaseFacade):
 
         return schemas.PlaylistSong.from_orm(playlist_song)
 
+    async def get_songs_in_playlist(self, playlist_id: int) -> list[schemas.PlaylistSong]:
+        playlist_songs = await self.db.execute(
+            select(models.PlaylistSong)
+            .filter(models.PlaylistSong.playlist_id == playlist_id)
+        )
+        return [schemas.PlaylistSong.from_orm(song) for song in playlist_songs.scalars().all()]
+
+
+
 
 playlist_facade = PlayList()

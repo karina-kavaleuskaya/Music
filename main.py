@@ -5,6 +5,7 @@ from facade.genre_facade import genre_facade
 from facade.album_facade import album_facade
 from facade.song_facade import song_facade
 from facade.favourite_song_facade import favourite_song_facade
+from facade.playlist_facade import playlist_facade
 from async_db import get_db
 import users
 import admin
@@ -17,6 +18,7 @@ def set_db_for_facades(db):
     album_facade.set_db(db)
     song_facade.set_db(db)
     favourite_song_facade.set_db(db)
+    playlist_facade.set_db(db)
 
 
 OAuth2_SCHEME = OAuth2PasswordBearer('user/login/')
