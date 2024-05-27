@@ -89,3 +89,14 @@ async def create_song(
     db_song = await song_facade.create_song(song_data, file_path)
 
     return db_song
+
+
+@router.delete('/songs/{song_id}/')
+async def delete_song(
+        song_id: int,
+        current_user: models.User = Depends(get_current_user)
+):
+    if not current_user.is_admin:
+        raise HTTP_EXCEPTION_FORBIDDEN
+
+    await song_facade.delete_song(song_id)
