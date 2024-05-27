@@ -1,5 +1,6 @@
 import models
 import schemas
+import os
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status, Depends, APIRouter, Response
 from async_db import get_db
@@ -7,8 +8,7 @@ from users import get_current_user
 from facade.favourite_song_facade import favourite_song_facade
 from facade.song_facade import song_facade
 from facade.playlist_facade import playlist_facade
-from facade.song_manager_facade import SongManager
-
+from facade.facade import FILE_MANAGER
 
 router = APIRouter(
     prefix='/api',
@@ -78,20 +78,16 @@ async def get_playlist_songs(
     playlist_songs = await playlist_facade.get_songs_in_playlist(playlist_id)
     return playlist_songs
 
-
-@router.get('/songs/{song_id}')
-async def get_song(
-    song_id: int,
-    db: AsyncSession = Depends(get_db)
-):
-    song_manager = SongManager(db)
-    song = await song_manager.get_song(song_id)
-    return song
-
 @router.get('/songs/{song_id}/download')
-async def download_song(
-    song_id: int,
-    db: AsyncSession = Depends(get_db)
-):
-    song_manager = SongManager(db)
-    return await song_manager.download_file(song_id)
+async def download_song(song_id: int,
+                        current_user: models.User = Depends(get_current_user)
+                        ):
+    song = await song_facade.get_song(song_id)
+    file_data = await FILE_MANAGER.get_file(song.file_path)
+
+    if not file_data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='File not found')
+
+    return Response(content=file_data,
+                    media_type='application/octet-stream',
+                    headers={'Content-Disposition': f"attachment; filename={os.path.basename(song.file_path)}"})

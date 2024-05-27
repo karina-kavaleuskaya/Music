@@ -4,6 +4,7 @@ from facade.base_facade import BaseFacade
 from fastapi import HTTPException, status
 from sqlalchemy.future import select
 from sqlalchemy import func
+from facade.facade import FILE_MANAGER
 
 
 class SongFacade(BaseFacade):
@@ -57,6 +58,29 @@ class SongFacade(BaseFacade):
             favorite_count=favorite_count
         ) for song, favorite_count in songs]
 
+    async def get_song(self, song_id: int) -> models.Song:
+        song = await self.db.get(models.Song, song_id)
+        if not song:
+            raise HTTPException(status_code=404, detail="Song not found")
+        return song
+
+    async def delete_song(self, song_id:int) -> None:
+        song = await self.db.get(models.Song, song_id)
+        if not song:
+            raise HTTPException(status_code=404, detail="Song not found")
+        await FILE_MANAGER.delete_file(song.file_path)
+        await self.db.execute(
+            models.SongGenreAssociation.__table__.delete().where(models.SongGenreAssociation.song_id == song_id)
+        )
+        await self.db.execute(
+            models.FavoriteSong.__table__.delete().where(models.FavoriteSong.song_id == song_id)
+        )
+        await self.db.execute(
+            models.PlaylistSong.__table__.delete().where(models.PlaylistSong.song_id == song_id)
+        )
+
+        await self.db.delete(song)
+        await self.db.commit()
 
 
 song_facade = SongFacade()
